@@ -94,11 +94,39 @@ def test_loop(dataloader, model, loss_fn):
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
+    return correct
+
 loss_fn = nn.CrossEntropyLoss()         #这个损失函数包含了Softmax(n.LogSoftmax)和负对数似然(nn.NLLLoss)的功能
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)   #尝试不同优化器
+
+best_acc = 0.0 # 记录历史最高准确率
 
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train_loop(training_dataloader, model, loss_fn, optimizer)
     test_loop(test_dataloader, model, loss_fn)
+    current_acc = test_loop(test_dataloader, model, loss_fn)
+
+    if current_acc > best_acc:
+        best_acc = current_acc
+        torch.save(model.state_dict(), 'best_model_weights.pth')
+
 print("Done!")
+
+
+loaded_model = NeuralNetwork().to(device)
+
+loaded_model.load_state_dict(torch.load('best_model_weights.pth', map_location=device, weights_only=True))
+
+loaded_model.eval()
+
+sample_X, sample_y = test_data[0][0], test_data[0][1]
+sample_X = sample_X.unsqueeze(0).to(device) # 增加 Batch 维度，变成 [1, 1, 28, 28]
+
+with torch.no_grad():
+    pred_logits = loaded_model(sample_X)
+    predicted_class = pred_logits.argmax(1).item()
+    
+print(f"抽取测试集第 1 张图片:")
+print(f"真实类别: {sample_y}")
+print(f"模型预测: {predicted_class}")
