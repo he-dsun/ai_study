@@ -132,3 +132,4 @@ with torch.no_grad():
 print(f"抽取图片")
 print(f"真实类别: {sample_y}")
 print(f"模型预测: {predicted_class}")
+#CIFAR10数据集分类在细节上和我做的上一个模型有所不同，但大体框架一致
